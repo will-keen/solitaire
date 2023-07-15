@@ -4,6 +4,10 @@ BOARD_WIDTH = 7
 MIN_VAL = 2
 MAX_VAL = BOARD_WIDTH - 2
 
+def index_is_legal(x, y):
+	return (((x >= MIN_VAL and x < MAX_VAL) and ((y >= MIN_VAL) or (y < MAX_VAL))) or
+			((y >= MIN_VAL and y < MAX_VAL) and ((x >= MIN_VAL) or (x < MAX_VAL))))
+
 class Space:
 	""" Represents one space on the game board"""
 
@@ -26,13 +30,28 @@ class Board:
 		self.spaces = [[None for x in range(BOARD_WIDTH)] for y in range(BOARD_WIDTH)]
 		for x in range(BOARD_WIDTH):
 			for y in range(BOARD_WIDTH):
-				is_legal = (((x >= MIN_VAL and x < MAX_VAL) and ((y >= MIN_VAL) or (y < MAX_VAL))) or
-					        ((y >= MIN_VAL and y < MAX_VAL) and ((x >= MIN_VAL) or (x < MAX_VAL))))
+				is_legal = index_is_legal(x,y)
 				self.spaces[x][y] = Space(is_legal, True)
+		self.spaces[3][3].occupied = False
+
+	def move_legal(self, x, y, dir):
+		""" For a given space, returns true if there is a
+			legal move in that direction"""
+		if not (self.spaces[x][y] and self.spaces[x][y].legal and self.spaces[x][y].occupied):
+			return False
+		if dir == "right":
+
 
 	def get_moves(self):
 		""" Returns all currently legal moves, as a list of
-		    boards that would be legal next states"""
+		    boards that represent legal next states"""
+		# Find sequences of occupied spaces followed by an
+		# occupied and an unoccupied space in the same axis
+		for x in range(BOARD_WIDTH):
+			for y in range(BOARD_WIDTH):
+				current = self.spaces[x][y]
+				if (current.occuped):
+					if (self.spaces[x+1][y] and self.spaces[x+1][y])
 
 	def as_string(self):
 		""" Returns a string denoting the game board"""
