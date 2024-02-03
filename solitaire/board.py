@@ -28,50 +28,61 @@ def space_exists(x: int, y: int) -> bool:
     '''
     Returns true if a space exists on the board, false otherwise.
     '''
-    if x >= BOARD_WIDTH or y >= BOARD_WIDTH:
+    if x < 0 or y < 0 or x >= BOARD_WIDTH or y >= BOARD_WIDTH:
         return False
     return (((x >= MIN_VAL and x < MAX_VAL) and ((y >= MIN_VAL) or (y < MAX_VAL))) or
             ((y >= MIN_VAL and y < MAX_VAL) and ((x >= MIN_VAL) or (x < MAX_VAL))))
 
 
 class Space:
-    """ Represents one space on the game board. """
+    """
+    Represents one space on the game board.
+    """
 
-    def __init__(self, legal: bool, occupied: bool):
-        """ Create a space - either it can
-            accept a piece or not."""
-        self.legal = legal
+    def __init__(self, exists: bool, occupied: bool):
+        """
+        Create a space - either it can accept a piece or not.
+        """
+        self.exists = exists
         self.occupied = occupied
 
     def __str__(self) -> str:
-        """ Returns string representation of space. """
-        space_str = " " if not self.legal else "o" if self.occupied else "."
+        """
+        Returns string representation of space.
+        """
+        space_str = " " if not self.exists else "o" if self.occupied else "."
         return space_str
 
 
 class Board:
-    """ Represents the game board, containing the spaces. """
+    """
+    Represents the game board, containing the spaces.
+    """
 
     def __init__(self):
-        """ Create the basic game board. """
+        """
+        Create the basic game board.
+        """
         # Create a square of pieces for easy indexing.
-        # Not all spaces are legal.
+        # Not all spaces on the grid exist on the board.
+        # Top left is 0,0.
         self.spaces = [[None for x in range(BOARD_WIDTH)] for y in range(BOARD_WIDTH)]
-        for x in range(BOARD_WIDTH):
-            for y in range(BOARD_WIDTH):
-                is_legal = space_exists(x,y)
-                self.spaces[x][y] = Space(is_legal, True)
+        for y in range(BOARD_WIDTH):
+            for x in range(BOARD_WIDTH):
+                self.spaces[y][x] = Space(space_exists(x,y), True)
         # Remove central piece.
         self.spaces[3][3].occupied = False
 
     def move_legal(self, move: Move) -> bool:
-        """ For a given space, returns true if there is a
-            legal move in that direction. """
+        """
+        For a given space, returns true if there is a
+        legal move in that direction.
+        """
         # No legal move if there's no piece in the space.
         x = move.x
         y = move.y
         jump_dir = move.jump_dir
-        if not (self.spaces[x][y].legal and self.spaces[x][y].occupied):
+        if not (self.spaces[y][x].exists and self.spaces[y][x].occupied):
             return False
         # Check each direction.
         if jump_dir == Direction.RIGHT:
@@ -79,55 +90,92 @@ class Board:
             # Must be an unoccupied space to the right of that.
             return (
                 space_exists(x+1, y) and
-                self.spaces[x+1][y].occupied and
+                self.spaces[y][x+1].occupied and
                 space_exists(x+2, y) and
-                not self.spaces[x+2][y].occupied
+                not self.spaces[y][x+2].occupied
             )
         elif jump_dir == Direction.LEFT:
             # Must be a piece in the space to the left.
             # Must be an unoccupied space to the left of that.
             return (
                 space_exists(x-1, y) and
-                self.spaces[x-1][y].occupied and
+                self.spaces[y][x-1].occupied and
                 space_exists(x-2, y) and
-                not self.spaces[x-2][y].occupied
+                not self.spaces[y][x-2].occupied
             )
         elif jump_dir == Direction.UP:
             # Must be a piece in the space above.
             # Must be an unoccupied space above of that.
             return (
-                space_exists(x, y+1) and
-                self.spaces[x][y+1].occupied and
-                space_exists(x, y+2) and
-                not self.spaces[x][y+2].occupied
+                space_exists(x, y-1) and
+                self.spaces[y-1][x].occupied and
+                space_exists(x, y-2) and
+                not self.spaces[y-2][x].occupied
             )
         elif jump_dir == Direction.DOWN:
             # Must be a piece in the space above.
             # Must be an unoccupied space above of that.
             return (
-                space_exists(x, y-1) and
-                self.spaces[x][y-1].occupied and
-                space_exists(x, y-2) and
-                not self.spaces[x][y-2].occupied
+                space_exists(x, y+1) and
+                self.spaces[y+1][x].occupied and
+                space_exists(x, y+2) and
+                not self.spaces[y+2][x].occupied
             )
 
-    def get_moves(self) -> List['Board']:
-        """ Returns all currently legal moves, as a list of
-            boards that represent legal next states. """
+    def get_moves(self) -> List[Move]:
+        """
+        Returns all currently legal moves, as a list of
+        moves that give legal next states.
+        """
         legal_moves = []
-        for x in range(BOARD_WIDTH):
-            for y in range(BOARD_WIDTH):
+        for y in range(BOARD_WIDTH):
+            for x in range(BOARD_WIDTH):
                 for jump_dir in Direction:
                     move = Move(x, y, jump_dir)
                     if self.move_legal(move):
                         legal_moves.append(move)
         return legal_moves
 
+    def apply_move(self, move: Move) -> None:
+        """
+        Applies a move to the game board.
+        """
+        if not self.move_legal(move):
+            raise RuntimeError(f"illegal move: {move} for board:\n{str(self)}")
+        self.spaces[move.y][move.x].occupied = False
+        if move.jump_dir == Direction.LEFT:
+            self.spaces[move.y][move.x - 1].occupied = False
+            self.spaces[move.y][move.x - 2].occupied = True
+        elif move.jump_dir == Direction.RIGHT:
+            self.spaces[move.y][move.x + 1].occupied = False
+            self.spaces[move.y][move.x + 2].occupied = True
+        elif move.jump_dir == Direction.UP:
+            self.spaces[move.y - 1][move.x].occupied = False
+            self.spaces[move.y - 2][move.x].occupied = True
+        elif move.jump_dir == Direction.DOWN:
+            self.spaces[move.y + 1][move.x].occupied = False
+            self.spaces[move.y + 2][move.x].occupied = True
+
+    def num_pieces(self) -> int:
+        """
+        Returns the number of pieces remaining on the board.
+        """
+        count = 0
+        for y in range(BOARD_WIDTH):
+            for x in range(BOARD_WIDTH):
+                if self.spaces[y][x].exists and self.spaces[y][x].occupied:
+                    count += 1
+        return count
+
     def __str__(self) -> str:
-        """ Returns a string denoting the game board. """
+        """
+        Returns a string denoting the game board.
+        """
         board_str = ""
-        for x in range(BOARD_WIDTH):
-            for y in range(BOARD_WIDTH):
-                board_str += str(self.spaces[x][y])
+        board_str += "  " + " ".join(str(x) for x in range(BOARD_WIDTH)) + "\n"
+        for y in range(BOARD_WIDTH):
+            board_str += f"{y} "
+            for x in range(BOARD_WIDTH):
+                board_str += str(self.spaces[y][x]) + " "
             board_str += "\n"
         return board_str[:-1]
