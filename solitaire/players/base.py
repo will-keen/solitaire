@@ -17,16 +17,18 @@ class BasePlayer:
             self.board = start_state
         self.turns = 0
 
-    def play(self, print_moves: bool=False) -> None:
+    def play(self, print_moves: bool=False) -> bool:
         """
-        Play the game to the end.
+        Play the game to the end. Returns true if it's a win.
         """
         while len(self.board.get_moves()) > 0:
             if print_moves:
                 print(str(self))
             self.make_move(print_move=print_moves)
             self.turns += 1
-        print(str(self))
+        if self.board.num_pieces == 1:
+            return True
+        return False
 
     def make_move(self, print_move: bool) -> None:
         raise NotImplementedError("If inheriting from BasePlayer, must implement make_move")
