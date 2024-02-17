@@ -1,7 +1,7 @@
 """
 Base class for solitaire players.
 """
-from solitaire.board import Board
+from solitaire.board import Board, Move
 
 
 class BasePlayer:
@@ -19,19 +19,44 @@ class BasePlayer:
 
     def play(self, print_moves: bool=False) -> int:
         """
-        Play the game to the end. Returns score in number of pieces left.
+        Play the game to the end. Returns score (number of pieces left).
+        A lower score is better, 1 being the best.
+
+        args:
+            print_moves:
+                If True, print each move and its result as the game is played.
+            strict:
+                If True, check that result of `get_next_move` is valid.
+                Slows down performance.
+        return:
+            The number of pieces remaining when there are no possible
+            moves remaining.
         """
         while len(self.board.get_moves()) > 0:
             if print_moves:
                 print(str(self))
-            self.make_move(print_move=print_moves)
+            next_move = self.get_next_move()
+            if print_moves:
+                print(f"Next move: {next_move}\n")
+            self.board.apply_move(next_move)
             self.turns += 1
         return self.board.num_pieces()
 
-    def make_move(self, print_move: bool) -> None:
-        raise NotImplementedError("If inheriting from BasePlayer, must implement make_move")
+    def get_next_move(self) -> Move:
+        """
+        Method to override when creating players. Should return
+        the next move according to the player's algorithm,
+        based on the current board state (`self.board`).
+
+        return:
+            The next move to be made.
+        """
+        raise NotImplementedError("If inheriting from BasePlayer, must implement get_next_move")
 
     def __str__(self) -> str:
+        """
+        Return string representation.
+        """
         as_str = f"{self.name} turn {self.turns}:\n\n"
         as_str += f"Board:\n{str(self.board)}\n\n"
         as_str += f"Pieces remaining: {self.board.num_pieces()}\n\n"

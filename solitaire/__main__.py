@@ -10,14 +10,14 @@ from solitaire.players.random import RandomPlayer
 def parse_args() -> Namespace:
     parser = ArgumentParser("Solitaire simulator")
     parser.add_argument(
-        "--print-moves",
-        action="store_true",
-        help="Print all moves as the game progresses."
-    )
-    parser.add_argument(
-        "--no-print",
-        action="store_true",
-        help="Specify if you don't want any printing. Useful for large simulations."
+        "--print",
+        choices=("all-moves", "end-state", "summary"),
+        help=(
+            "What to print. 'all-moves' means print every move."
+            " 'end-state' means print just the end state of each game."
+            " 'summary' means only summarise the statistics for each player."
+        ),
+        default="end-state",
     )
     parser.add_argument(
         "--num-games",
@@ -31,8 +31,6 @@ def parse_args() -> Namespace:
         help="Stop simulating if a win occurs."
     )
     args = parser.parse_args()
-    if args.no_print and args.print_moves:
-        raise ValueError("Can't use --no-print and --print-moves")
     return args
 
 
@@ -42,9 +40,9 @@ def run_player(player: type, args: Namespace):
     player_name = player.__name__
     for x in range(1, args.num_games+1):
         random_player = player(name=f"{player_name} game {x}")
-        score = random_player.play(args.print_moves)
+        score = random_player.play(args.print == "all-moves")
         total_score += score
-        if not args.no_print:
+        if args.print != "summary":
             print(str(random_player))
         if score == 1:
             print(f"{random_player.name} was a winner!")

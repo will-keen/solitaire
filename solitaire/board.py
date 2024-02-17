@@ -33,22 +33,21 @@ def space_exists(x: int, y: int) -> bool:
     return (((x >= MIN_VAL and x < MAX_VAL) and ((y >= MIN_VAL) or (y < MAX_VAL))) or
             ((y >= MIN_VAL and y < MAX_VAL) and ((x >= MIN_VAL) or (x < MAX_VAL))))
 
-
+@dataclass
 class Space:
     """
     Represents one space on the game board.
-    """
 
-    def __init__(self, exists: bool, occupied: bool):
-        """
-        Create a space - either it can accept a piece or not.
-        """
-        self.exists = exists
-        self.occupied = occupied
+    A space either exists or doesn't (i.e. it's a real slot on
+    the game board at this coordinate), and is either occupied
+    or isn't.
+    """
+    exists: bool
+    occupied: bool
 
     def __str__(self) -> str:
         """
-        Returns string representation of space.
+        Returns string representation of space on the board.
         """
         space_str = " " if not self.exists else "o" if self.occupied else "."
         return space_str
@@ -72,6 +71,9 @@ class Board:
                 self.spaces[y][x] = Space(space_exists(x,y), True)
         # Remove central piece.
         self.spaces[3][3].occupied = False
+        # For caching possible moves.
+        self.changed = False
+        self.cached_moves = None
 
     def move_legal(self, move: Move) -> bool:
         """

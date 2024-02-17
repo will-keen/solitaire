@@ -9,8 +9,9 @@ class EdgePlayer(BasePlayer):
     Edge player. Aims to always move most extreme pieces.
     """
 
-    def make_move(self, print_move: bool) -> None:
+    def get_next_move(self) -> None:
         all_moves = self.board.get_moves()
+        # Ensure that each game does something different
         random.shuffle(all_moves)
         best_move = None
         best_distance = None
@@ -32,6 +33,4 @@ class EdgePlayer(BasePlayer):
             elif closest_distance < best_distance:
                 best_move = move
                 best_distance = closest_distance
-        if print_move:
-            print(f"Next move: {best_move}\n")
-        self.board.apply_move(best_move)
+        return best_move
